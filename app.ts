@@ -1,23 +1,18 @@
 // src/app.ts
 import TelegramBot from 'node-telegram-bot-api';
-import mongoose from './db';
 import User from './models/user';
+import connectDB from "./db";
+import i18next from "i18next";
 
 const token = '1822684302:AAG8uTXPmn8qJZJ9WCnFV77YwdEsrXJ3Zkc'; // Замените на ваш токен
 
 (async () => { // <-- Асинхронная функция
     try {
-        const mongoURI = 'mongodb://localhost:27017/has_db'; // Замените на ваш URI
-        await mongoose.connect(mongoURI, {
-            serverApi: {
-                version: require('mongodb').ServerApiVersion.v1,
-                strict: true,
-                deprecationErrors: true,
-            }
-        });
+
+        await connectDB();
+
         console.log('MongoDB connected!');
 
-        // Запускаем бота только после успешного подключения
         const bot = new TelegramBot(token, { polling: true });
 
         bot.onText(/\/start/, async (msg) => {
@@ -41,13 +36,13 @@ const token = '1822684302:AAG8uTXPmn8qJZJ9WCnFV77YwdEsrXJ3Zkc'; // Замени�
                     });
 
                     await user.save();
-                    bot.sendMessage(chatId, 'Добро пожаловать! Вы зарегистрированы.');
+                    bot.sendMessage(chatId, i18next.t('welcomeMessage'));
                 } else {
-                    bot.sendMessage(chatId, 'Вы уже зарегистрированы!');
+                    bot.sendMessage(chatId, i18next.t('alreadyRegistered'));
                 }
             } catch (err) {
                 console.error(err);
-                bot.sendMessage(chatId, 'Произошла ошибка!');
+                bot.sendMessage(chatId, i18next.t('errorMessage'));
             }
         });
 
@@ -56,4 +51,4 @@ const token = '1822684302:AAG8uTXPmn8qJZJ9WCnFV77YwdEsrXJ3Zkc'; // Замени�
     } catch (err) {
         console.error('Ошибка подключения к MongoDB:', err);
     }
-})(); // <-- Вызываем асинхронную функцию
+})();

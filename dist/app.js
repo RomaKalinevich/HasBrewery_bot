@@ -15,41 +15,45 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // src/app.ts
 const node_telegram_bot_api_1 = __importDefault(require("node-telegram-bot-api"));
 const user_1 = __importDefault(require("./models/user"));
+const db_1 = __importDefault(require("./db"));
+const i18next_1 = __importDefault(require("i18next"));
 const token = '1822684302:AAG8uTXPmn8qJZJ9WCnFV77YwdEsrXJ3Zkc'; // Замените на ваш токен
-const bot = new node_telegram_bot_api_1.default(token, { polling: true });
-bot.onText(/\/start/, (msg) => __awaiter(void 0, void 0, void 0, function* () {
-    if (!msg.from) {
-        console.error('Ошибка: msg.from не определен');
-        return; // Прерываем обработку, если msg.from не определен
-    }
-    const chatId = msg.chat.id;
-    const userId = msg.from.id; // Обратите внимание: здесь msg.from точно не undefined, так как Telegram всегда его присылает
+(() => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let user = yield user_1.default.findOne({ telegramId: userId });
-        if (!user) {
-            if (msg.from) { // <-- Type guard для msg.from
-                user = new user_1.default({
-                    telegramId: userId,
-                    firstName: msg.from.first_name,
-                    lastName: msg.from.last_name,
-                    username: msg.from.username,
-                });
-                yield user.save();
-                bot.sendMessage(chatId, 'Добро пожаловать! Вы зарегистрированы.');
-            }
-            else {
-                // Обработка ситуации, когда msg.from не определен (что маловероятно)
+        yield (0, db_1.default)();
+        console.log('MongoDB connected!');
+        const bot = new node_telegram_bot_api_1.default(token, { polling: true });
+        bot.onText(/\/start/, (msg) => __awaiter(void 0, void 0, void 0, function* () {
+            if (!msg.from) {
                 console.error('Ошибка: msg.from не определен');
-                bot.sendMessage(chatId, 'Произошла ошибка при регистрации. Попробуйте позже.');
+                return;
             }
-        }
-        else {
-            bot.sendMessage(chatId, 'Вы уже зарегистрированы!');
-        }
+            const chatId = msg.chat.id;
+            const userId = msg.from.id;
+            try {
+                let user = yield user_1.default.findOne({ telegramId: userId });
+                if (!user) {
+                    user = new user_1.default({
+                        telegramId: userId,
+                        firstName: msg.from.first_name,
+                        lastName: msg.from.last_name,
+                        username: msg.from.username,
+                    });
+                    yield user.save();
+                    bot.sendMessage(chatId, i18next_1.default.t('welcomeMessage'));
+                }
+                else {
+                    bot.sendMessage(chatId, i18next_1.default.t('alreadyRegistered'));
+                }
+            }
+            catch (err) {
+                console.error(err);
+                bot.sendMessage(chatId, i18next_1.default.t('errorMessage'));
+            }
+        }));
+        console.log('Бот запущен');
     }
     catch (err) {
-        console.error(err);
-        bot.sendMessage(chatId, 'Произошла ошибка!');
+        console.error('Ошибка подключения к MongoDB:', err);
     }
-}));
-console.log('Бот запущен');
+}))();
