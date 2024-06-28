@@ -16,35 +16,56 @@ const token = '1822684302:AAG8uTXPmn8qJZJ9WCnFV77YwdEsrXJ3Zkc'; // Замени�
         const bot = new TelegramBot(token, { polling: true });
 
         bot.onText(/\/start/, async (msg) => {
-            if (!msg.from) {
-                console.error('Ошибка: msg.from не определен');
-                return;
-            }
-
             const chatId = msg.chat.id;
-            const userId = msg.from.id;
 
-            try {
-                let user = await User.findOne({ telegramId: userId });
+            // Создаем объект клавиатуры
+            const keyboard = {
+                inline_keyboard: [
+                    [
+                        { text: 'Посмотреть меню', callback_data: 'show_menu' },
+                        { text: 'Сделать заказ', callback_data: 'make_order' },
+                    ],
+                    [
+                        { text: 'О нас', callback_data: 'about_us' }
+                    ]
+                ]
+            };
 
-                if (!user) {
-                    user = new User({
-                        telegramId: userId,
-                        firstName: msg.from.first_name,
-                        lastName: msg.from.last_name,
-                        username: msg.from.username,
-                    });
-
-                    await user.save();
-                    bot.sendMessage(chatId, i18next.t('welcomeMessage'));
-                } else {
-                    bot.sendMessage(chatId, i18next.t('alreadyRegistered'));
-                }
-            } catch (err) {
-                console.error(err);
-                bot.sendMessage(chatId, i18next.t('errorMessage'));
-            }
+            // Отправляем сообщение с клавиатурой
+            bot.sendMessage(chatId, 'Выберите действие:', { reply_markup: keyboard });
         });
+
+
+        // bot.onText(/\/start/, async (msg) => {
+        //     if (!msg.from) {
+        //         console.error('Ошибка: msg.from не определен');
+        //         return;
+        //     }
+        //
+        //     const chatId = msg.chat.id;
+        //     const userId = msg.from.id;
+        //
+        //     try {
+        //         let user = await User.findOne({ telegramId: userId });
+        //
+        //         if (!user) {
+        //             user = new User({
+        //                 telegramId: userId,
+        //                 firstName: msg.from.first_name,
+        //                 lastName: msg.from.last_name,
+        //                 username: msg.from.username,
+        //             });
+        //
+        //             await user.save();
+        //             bot.sendMessage(chatId, i18next.t('welcomeMessage'));
+        //         } else {
+        //             bot.sendMessage(chatId, i18next.t('alreadyRegistered'));
+        //         }
+        //     } catch (err) {
+        //         console.error(err);
+        //         bot.sendMessage(chatId, i18next.t('errorMessage'));
+        //     }
+        // });
 
         console.log('Бот запущен');
 
