@@ -35,6 +35,19 @@ const token = '1822684302:AAG8uTXPmn8qJZJ9WCnFV77YwdEsrXJ3Zkc'; // Замени�
             bot.sendMessage(chatId, 'Выберите действие:', { reply_markup: keyboard });
         });
 
+        bot.on('callback_query', async (query) => {
+            const chatId = query.message.chat.id;
+            const data = query.data; // Получаем данные из нажатой кнопки
+
+            if (data === 'show_menu') {
+                bot.sendMessage(chatId, 'Вот наше меню: ...');
+            } else if (data === 'make_order') {
+                bot.sendMessage(chatId, 'Как сделать заказ: ...');
+            } else if (data === 'about_us') {
+                bot.sendMessage(chatId, 'Информация о нас: ...');
+            }
+        });
+
 
         // bot.onText(/\/start/, async (msg) => {
         //     if (!msg.from) {

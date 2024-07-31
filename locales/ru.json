@@ -1,0 +1,21 @@
+{
+  "welcomeMessage": "Добро пожаловать! Вы не зарегистрированы.",
+  "alreadyRegistered": "Вы уже зарегистрированы!",
+  "errorMessage": "Произошла ошибка!",
+  "adminStats": "Статистика (пока не активно)",
+  "adminUsers": "Пользователи",
+  "adminRegisterUser": "Регистрация пользователя",
+  "currentUsers": "Управление пользователями",
+  "adminManageAssortment": "Управление ассортиментом",
+  "adminManageOrders": "Управление заявками",
+  "changeAssortment": "Изменить ассортимент",
+  "addNewBeer": "Добавить новое пиво",
+  "adminAddClient": "Добавить клиента",
+  "adminAddOrder": "Добавить заявку",
+  "adminManageOrdersMessage": "Управление заявками. Выберите действие:",
+  "noClientsMessage": "Для начала добавьте клиента",
+  "selectClient": "Выберите клиента:",
+  "createOrderForClient": "Создать заявку",
+  "mainMenu": "Главное меню",
+  "returnToMainMenu": "Назад"
+}
