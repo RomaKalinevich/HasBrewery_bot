@@ -12,62 +12,86 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-// src/app.ts
 const node_telegram_bot_api_1 = __importDefault(require("node-telegram-bot-api"));
+const i18next_fs_backend_1 = __importDefault(require("i18next-fs-backend"));
 const db_1 = __importDefault(require("./db"));
-const token = '1822684302:AAG8uTXPmn8qJZJ9WCnFV77YwdEsrXJ3Zkc'; // Замените на ваш токен
+const user_1 = __importDefault(require("./models/user"));
+const i18next_1 = __importDefault(require("i18next"));
+const index_1 = __importDefault(require("./admin/index"));
+const token = '7477603293:AAGvjDH7VVcwXSgP_bFPEiUPTVPzqmf4pUE'; // Замените на ваш токен
 (() => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        yield (0, db_1.default)();
+        yield i18next_1.default
+            .use(i18next_fs_backend_1.default)
+            .init({
+            lng: 'ru',
+            fallbackLng: 'en',
+            backend: {
+                loadPath: './locales/{{lng}}.json', // Путь к файлам локализации
+            },
+        });
+        const mongoURI = 'mongodb://localhost:27017/has_db';
+        yield db_1.default.connect(mongoURI, {
+            serverApi: {
+                version: require('mongodb').ServerApiVersion.v1,
+                strict: true,
+                deprecationErrors: true,
+            }
+        });
         console.log('MongoDB connected!');
         const bot = new node_telegram_bot_api_1.default(token, { polling: true });
+        (0, index_1.default)(bot);
         bot.onText(/\/start/, (msg) => __awaiter(void 0, void 0, void 0, function* () {
+            if (!msg.from) {
+                console.error('Ошибка: msg.from не определен');
+                return;
+            }
             const chatId = msg.chat.id;
-            // Создаем объект клавиатуры
-            const keyboard = {
-                inline_keyboard: [
-                    [
-                        { text: 'Посмотреть меню', callback_data: 'show_menu' },
-                        { text: 'Сделать заказ', callback_data: 'make_order' },
-                    ],
-                    [
-                        { text: 'О нас', callback_data: 'about_us' }
-                    ]
-                ]
-            };
-            // Отправляем сообщение с клавиатурой
-            bot.sendMessage(chatId, 'Выберите действие:', { reply_markup: keyboard });
+            const userId = msg.from.id;
+            try {
+                let user = yield user_1.default.findOne({ telegramId: userId });
+                if (!user) {
+                    user = new user_1.default({
+                        telegramId: userId,
+                        firstName: msg.from.first_name,
+                        lastName: msg.from.last_name,
+                        username: msg.from.username,
+                    });
+                    yield user.save();
+                    bot.sendMessage(chatId, i18next_1.default.t('welcomeMessage'));
+                }
+                else {
+                    let message = 'Выберите действие:';
+                    let keyboard;
+                    if (user.role === 'admin') {
+                        keyboard = {
+                            keyboard: [
+                                [
+                                    { text: i18next_1.default.t('adminStats') },
+                                    { text: i18next_1.default.t('adminUsers') }
+                                ],
+                                [
+                                    { text: i18next_1.default.t('adminManageAssortment') },
+                                    { text: i18next_1.default.t('adminManageOrders') }
+                                ]
+                            ],
+                        };
+                    }
+                    else {
+                        keyboard = {
+                            keyboard: [
+                                [{ text: '/driver orders' }, { text: '/driver delivered' }],
+                            ],
+                        };
+                    }
+                    bot.sendMessage(chatId, i18next_1.default.t('alreadyRegistered'), { reply_markup: keyboard });
+                }
+            }
+            catch (err) {
+                console.error(err);
+                bot.sendMessage(chatId, i18next_1.default.t('errorMessage'));
+            }
         }));
-        // bot.onText(/\/start/, async (msg) => {
-        //     if (!msg.from) {
-        //         console.error('Ошибка: msg.from не определен');
-        //         return;
-        //     }
-        //
-        //     const chatId = msg.chat.id;
-        //     const userId = msg.from.id;
-        //
-        //     try {
-        //         let user = await User.findOne({ telegramId: userId });
-        //
-        //         if (!user) {
-        //             user = new User({
-        //                 telegramId: userId,
-        //                 firstName: msg.from.first_name,
-        //                 lastName: msg.from.last_name,
-        //                 username: msg.from.username,
-        //             });
-        //
-        //             await user.save();
-        //             bot.sendMessage(chatId, i18next.t('welcomeMessage'));
-        //         } else {
-        //             bot.sendMessage(chatId, i18next.t('alreadyRegistered'));
-        //         }
-        //     } catch (err) {
-        //         console.error(err);
-        //         bot.sendMessage(chatId, i18next.t('errorMessage'));
-        //     }
-        // });
         console.log('Бот запущен');
     }
     catch (err) {
